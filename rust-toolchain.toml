@@ -1,0 +1,7 @@
+# ohMyWork 固定工具链（V1：Windows 11 x64 + MSVC）。
+# 参考 docs/adr/adr-0001-windows-rust-gpui.md；requirements 见 docs/development.md。
+# rustup 会按此文件自动选择/安装对应工具链；安装动作需用户显式授权。
+[toolchain]
+channel = "1.98.1"
+targets = ["x86_64-pc-windows-msvc"]
+components = ["rustfmt", "clippy"]

@@ -1,0 +1,11 @@
+# 仓库级 Cargo 配置：只影响本仓库；不修改用户/全局 Cargo 配置，不修改 PATH。
+
+# V1 仅面向 Windows 11 x64 + MSVC（docs/adr/adr-0001-windows-rust-gpui.md），
+# 显式固定默认 target，避免在 host 未对齐的环境（如 MinGW shell）误用其他链接器。
+[build]
+target = "x86_64-pc-windows-msvc"
+
+# 不在此显式指定 linker：rustc 会从注册表/vswhere 自动定位 VS Build Tools 的
+# link.exe；若把 linker 硬编码为 "link.exe"，反而要求在 PATH 中预先载入 MSVC，
+# 会破坏普通 shell 下的构建。链接环境问题由 tools/doctor.ps1 检测并提示。
+[target.x86_64-pc-windows-msvc]

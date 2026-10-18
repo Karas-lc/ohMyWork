@@ -1,0 +1,13 @@
+[package]
+name = "omw-document"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Lossless Markdown document model: parse-only source ranges with byte-exact roundtrip."
+
+[dependencies]
+comrak.workspace = true
+ropey.workspace = true
+unicode-segmentation.workspace = true

@@ -1,0 +1,73 @@
+ohMyWork V1 Third-Party Notices
+====================================
+
+This product bundles or dynamically links the following third-party components.
+Full license texts are reproduced or referenced below. See Cargo.lock for authoritative
+version graph. This file is installed alongside the application.
+
+GPUI Kit and related (Apache-2.0)
+---------------------------------
+gpui-kit 0.7.0 (and gpui-base, gpui-component, gpui-kit-assets, gpui-pre* 0.3.7)
+Source: https://github.com/longbridge/gpui-kit
+License: Apache-2.0
+See: https://www.apache.org/licenses/LICENSE-2.0
+
+The GPUI implementation and examples follow the Apache-2.0 terms.
+Documentation examples (CC BY 4.0) are not bundled here.
+
+PDFium (BSD-3-Clause + aggregated third-party)
+----------------------------------------------
+pdfium.dll (chromium/7881 non-V8 x64 build)
+Source: https://github.com/bblanchon/pdfium-binaries/releases/tag/chromium%2F7881
+  (pdfium-win-x64.tgz ; extracted bin/pdfium.dll ; sha256 79d4676b656cfb1abcea88f9ade3b4b0826c5200382db5f4ec72a636c598c118)
+License: BSD-3-Clause (main) + aggregated licenses for FreeType, ICU, LCMS, libjpeg-turbo, OpenJPEG, zlib, libtiff, etc.
+The archive contains LICENSE and licenses/ subdir with full texts.
+Upstream PDFium: https://github.com/PDFium/PDFium (BSD-3-Clause)
+
+Verbatim (typical header from pdfium sources):
+Copyright 2014 PDFium Authors. All rights reserved.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following disclaimer
+     in the documentation and/or other materials provided with the
+     distribution.
+   * Neither the name of Google Inc. nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Additional third-party components in the PDFium build are covered by their own
+licenses (included in the tgz's licenses/ folder when extracted during CI).
+
+Other Rust dependencies
+-----------------------
+See the authoritative Cargo.lock + `cargo license` or `cargo about` output for
+the full list of crates, versions, and license expressions (Apache-2.0, MIT,
+BSD, etc.). Before any release candidate, regenerate and bundle complete
+license texts for every direct+transitive dep that requires notices.
+
+ohMyWork itself
+---------------
+Copyright (c) 2025-2026 ohMyWork contributors.
+Dual-licensed under MIT OR Apache-2.0 (at your option).
+
+IMPORTANT: If the PDFium asset (dll + full aggregated LICENSE/NOTICE from the
+chromium/7881 tgz) or hashes are incomplete in packaging/windows or CI fetch
+step, this product MUST NOT emit a candidate release package (fail closed).
+
+For full current inventory run the release process and verify manifest against
+installed files.

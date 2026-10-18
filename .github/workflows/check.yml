@@ -1,0 +1,80 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: windows-2025
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        shell: pwsh
+        run: >-
+          rustup toolchain install 1.98.1
+          --profile minimal
+          --component rustfmt,clippy
+          --target x86_64-pc-windows-msvc
+
+      - name: Report tool versions
+        shell: pwsh
+        run: |
+          rustc --version --verbose
+          cargo --version
+          cmake --version
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) {
+            throw "vswhere.exe was not found"
+          }
+          $vsPath = & $vswhere -latest -products '*' `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if (-not $vsPath) {
+            throw "Visual Studio with the MSVC x64 tools was not found"
+          }
+          & $vswhere -latest -products '*' -format json
+
+          $cl = Get-ChildItem -Path "$vsPath\VC\Tools\MSVC\*\bin\Hostx64\x64\cl.exe" |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if (-not $cl) {
+            throw "cl.exe was not found under $vsPath"
+          }
+          Write-Host "MSVC cl.exe: $($cl.FullName)"
+          Write-Host "MSVC file version: $($cl.VersionInfo.FileVersion)"
+
+          $sdk = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\Include" -Directory |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+          if (-not $sdk) {
+            throw "Windows SDK headers were not found"
+          }
+          Write-Host "Windows SDK: $($sdk.Name)"
+
+      - name: Diagnose native toolchain
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File ./tools/doctor.ps1 -Json
+          if ($LASTEXITCODE -eq 2) { exit 2 }
+          exit 0
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Lint
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      - name: Build release
+        run: cargo build --workspace --release --locked

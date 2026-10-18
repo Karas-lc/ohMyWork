@@ -124,8 +124,13 @@ doctor 只检测并给出命令，不自行安装；任何安装前需用户明�
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
-cargo run -p omw-app
+cargo run -p omw-app --bin ohmywork
+cargo run -p omw-app --bin ohmywork -- --editor-demo
 ```
+
+默认入口在 Workspace 初始化或恢复后显示真实工作台：文件树、Markdown 编辑、搜索、任务、Homepage 与 Pi 面板。`--editor-demo` 只用于隔离检查编辑器 fixture，不能作为真实文件保存或工作台集成的验收证据。
+
+图片/PDF 预览需要同目录的 `omw-preview-worker.exe`，PDF 还需要发布资产中的 `pdfium.dll`。性能脚本 `pwsh -File tools/bench.ps1 -CorpusDir <path> -Smoke` 只测索引与搜索 API，不测 GUI 启动、输入到显示或十标签内存预算。
 
 CI（GitHub Actions `windows-latest`）已预装 VS、Windows SDK 与 CMake，无需
 本文所述的人工步骤；CI 中先运行 `pwsh -File tools/doctor.ps1 -Json` 可在
@@ -135,3 +140,5 @@ CI（GitHub Actions `windows-latest`）已预装 VS、Windows SDK 与 CMake，�
 
 本机的实际安装情况、版本与缺口以各里程碑的完成报告为准；doctor 输出是唯一
 权威来源，不在此处记录静态快照。
+
+**V1 发布验证**：详见 [修复验证记录](verification.md)与[发布检查表](release-checklist.md)。本轮包含真实原生工作台交互及后端性能测量；未测项目单独列出，不将测试通过等同于发布批准。严格格式 / Clippy / CI、真实 Pi、IME / Narrator / 多缩放、安装升级卸载及 GUI 性能预算仍须完成验收。

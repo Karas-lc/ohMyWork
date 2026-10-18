@@ -1,0 +1,40 @@
+[package]
+name = "omw-app"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+jsonc-parser = { version = "0.34", features = ["serde"] }
+image = { version = "=0.25.10", default-features = false }
+blake3.workspace = true
+gpui-kit.workspace = true
+omw-document = { path = "../omw-document" }
+omw-local = { path = "../omw-local" }
+omw-pi = { path = "../omw-pi" }
+omw-preview-worker = { path = "../omw-preview-worker" }
+uuid.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+zip = { version = "2", default-features = false, features = ["deflate"] }
+unicode-segmentation.workspace = true
+ropey.workspace = true
+
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_System_ProcessStatus"] }
+[dev-dependencies]
+gpui-kit = { workspace = true, features = ["test-support"] }
+tempfile = "3"
+uuid.workspace = true
+[[bin]]
+name = "perf_runner"
+path = "src/bin/perf_runner.rs"
+# NOT included in any installer packaging (do not touch installer.nsi)
+[[bin]]
+name = "ohmywork"
+path = "src/main.rs"
+# Main user-facing binary (ohmywork.exe) produced for per-user installer. GPUI Kit default icons embedded at compile (main.rs uses .with_assets); never load from $INSTDIR or cwd. Excludes perf/fake as required.

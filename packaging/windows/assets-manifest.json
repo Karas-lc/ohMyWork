@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "product": "ohMyWork",
+  "version": "0.1.0",
+  "platform": "windows-x64",
+  "build": "release",
+  "notes": "Template manifest. In release.yml the staging copy is PATCHED with real SHA256+size of the just-built ohmywork.exe, omw-preview-worker.exe and verified pdfium.dll before NSIS compile. Upgrade/install verifies against the shipped (patched) manifest. pdfium entry is source of truth for download+hash check (fail closed if mismatch or missing). GPUI assets compiled-in. Excludes perf/fake.",
+  "files": [
+    {
+      "path": "ohmywork.exe",
+      "size": 31731200,
+      "sha256": "a795cfa040196f560ba165aa45e3ea8c70ec2d1fa72c09ee4d3d7680f3c603fb",
+      "required": true,
+      "notes": "Main application binary (name set via [[bin]] in omw-app/Cargo.toml). Value from current build; CI release re-patches with its artifacts."
+    },
+    {
+      "path": "omw-preview-worker.exe",
+      "size": 3515904,
+      "sha256": "791178c4f7fdb0a41b7c4cfd302ef0c97c91ae37718a78095026a2439f0fa98f",
+      "required": true,
+      "notes": "Preview worker; must ship with pdfium.dll adjacent. Value from current build; CI re-patches."
+    },
+    {
+      "path": "pdfium.dll",
+      "size": 7211520,
+      "sha256": "79d4676b656cfb1abcea88f9ade3b4b0826c5200382db5f4ec72a636c598c118",
+      "required": true,
+      "notes": "Pinned PDFium chromium/7881 non-V8 x64 from bblanchon/pdfium-binaries. Download+verify in release.yml using this hash. Full aggregated LICENSE in tgz."
+    },
+    {
+      "path": "THIRD-PARTY-NOTICES.txt",
+      "size": null,
+      "sha256": null,
+      "required": true,
+      "notes": "Aggregated notices (gpui-kit Apache-2.0 + pdfium BSD + others). See root THIRD_PARTY_LICENSES.md"
+    }
+  ]
+}

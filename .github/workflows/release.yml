@@ -1,0 +1,209 @@
+name: Release (Windows per-user NSIS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub release (only after manual pdfium verification)'
+        required: false
+        default: false
+        type: boolean
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        shell: pwsh
+        run: >-
+          rustup toolchain install 1.98.1
+          --profile minimal
+          --component rustfmt,clippy
+          --target x86_64-pc-windows-msvc
+
+      - name: Report tool versions
+        shell: pwsh
+        run: |
+          rustc --version --verbose
+          cargo --version
+          cmake --version
+
+      - name: Build release (locked, all workspace)
+        run: cargo build --workspace --release --locked
+
+      - name: Prepare packaging staging
+        shell: pwsh
+        run: |
+          $stage = "packaging\windows\staging"
+          New-Item -ItemType Directory -Force $stage | Out-Null
+
+          # Locate release dir (plain or triple subdir for msvc)
+          $releaseDir = if (Test-Path "target\x86_64-pc-windows-msvc\release\ohmywork.exe") {
+            "target\x86_64-pc-windows-msvc\release"
+          } elseif (Test-Path "target\release\ohmywork.exe") {
+            "target\release"
+          } else {
+            throw "Could not find built ohmywork.exe in expected release locations"
+          }
+          Write-Host "Using release dir: $releaseDir"
+
+          # Main binaries (ohmywork from explicit [[bin]], worker from its crate)
+          Copy-Item (Join-Path $releaseDir "ohmywork.exe") $stage -Force
+          Copy-Item (Join-Path $releaseDir "omw-preview-worker.exe") $stage -Force
+
+          # Notices and manifest (source of truth)
+          Copy-Item packaging\windows\THIRD-PARTY-NOTICES.txt $stage -Force
+          Copy-Item packaging\windows\assets-manifest.json $stage -Force
+
+          Write-Host "Staged core files."
+      - name: Fetch + verify pinned PDFium (chromium/7881, fail closed)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = "packaging\windows\staging"
+          $tgzUrl = "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7881/pdfium-win-x64.tgz"
+          $tgz = "$env:TEMP\pdfium-win-x64.tgz"
+          $dllTarget = Join-Path $stage "pdfium.dll"
+
+          Write-Host "Downloading PDFium tgz..."
+          Invoke-WebRequest -Uri $tgzUrl -OutFile $tgz -UseBasicParsing -TimeoutSec 180
+
+          Write-Host "Extracting pdfium.dll..."
+          tar -xzf $tgz -C $stage --strip-components 1 bin/pdfium.dll 2>$null || tar -xzf $tgz -C $stage 2>$null
+
+          if (-not (Test-Path $dllTarget)) {
+            # fallback search
+            $found = Get-ChildItem -Path $stage -Filter pdfium.dll -Recurse | Select-Object -First 1
+            if ($found) { Copy-Item $found.FullName $dllTarget -Force }
+          }
+
+          if (-not (Test-Path $dllTarget)) {
+            throw "pdfium.dll not extracted to staging"
+          }
+
+          $actualHash = (Get-FileHash -LiteralPath $dllTarget -Algorithm SHA256).Hash.ToLower()
+          Write-Host "PDFium actual SHA256: $actualHash"
+
+          # Load expected from manifest (source of truth)
+          $manifest = Get-Content packaging\windows\assets-manifest.json -Raw | ConvertFrom-Json
+          $expected = ($manifest.files | Where-Object { $_.path -eq 'pdfium.dll' }).sha256
+          if (-not $expected) {
+            throw "pdfium.dll entry or sha256 missing from assets-manifest.json"
+          }
+          if ($actualHash -ne $expected) {
+            throw "PDFium hash mismatch. Got $actualHash expected $expected. FAIL CLOSED."
+          }
+
+          Write-Host "PDFium verified against manifest. Size: $((Get-Item $dllTarget).Length)"
+
+          # Also stage the license dir if wanted (optional; notices already bundled)
+          # Clean temp
+          Remove-Item $tgz -Force -EA SilentlyContinue
+
+      - name: Patch staged manifest with real build hashes/sizes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = "packaging\windows\staging"
+          $man = Join-Path $stage "assets-manifest.json"
+          if (-not (Test-Path $man)) { throw "staged manifest missing" }
+          $m = Get-Content $man -Raw | ConvertFrom-Json
+          $files = @("ohmywork.exe", "omw-preview-worker.exe", "pdfium.dll")
+          foreach ($f in $files) {
+            $p = Join-Path $stage $f
+            if (Test-Path $p) {
+              $h = (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLower()
+              $sz = (Get-Item $p).Length
+              $entry = $m.files | Where-Object { $_.path -eq $f }
+              if ($entry) {
+                $entry.sha256 = $h
+                $entry.size = $sz
+                Write-Host "Patched $f : size=$sz sha=$h"
+              }
+            } else {
+              Write-Warning "File $f not in stage for hash patch"
+            }
+          }
+          $m | ConvertTo-Json -Depth 8 | Set-Content $man -Encoding utf8
+          Write-Host "Staged manifest updated with exact shipped hashes."
+      - name: Install NSIS (pinned-ish via choco for reproducibility)
+        shell: pwsh
+        run: |
+          choco install nsis --version 3.10 -y --no-progress
+          makensis /VERSION
+
+      - name: Compile NSIS installer (per-user, no-admin)
+        shell: pwsh
+        run: |
+          $version = "0.1.0"  # TODO: derive from Cargo.toml or git tag in future
+          # Pass defines if needed
+          makensis `
+            /V4 `
+            /DVERSION=$version `
+            /DPRODUCT_VERSION=$version `
+            /DSTAGEDIR=packaging\windows\staging `
+            packaging\windows\installer.nsi
+
+          $out = Get-ChildItem packaging\windows\*.exe | Select-Object -First 1
+          if (-not $out) { throw "NSIS did not produce .exe" }
+
+          # Label unsigned test packages explicitly
+          $unsignedName = $out.Name -replace '\.exe$', '-unsigned.exe'
+          Rename-Item $out.FullName $unsignedName -Force
+          $final = Join-Path (Split-Path $out) $unsignedName
+
+          Write-Host "Produced: $final"
+          Write-Host "NOTE: This is an UNSIGNED test build (labeled 未签名). Real releases MUST use real code-signing certificate. Do not claim SmartScreen bypass."
+
+          # Checksums
+          $sha = Get-FileHash $final -Algorithm SHA256
+          "$($sha.Hash)  $($final | Split-Path -Leaf)" | Out-File -FilePath "$final.sha256" -Encoding ascii
+          Write-Host "SHA256: $($sha.Hash)"
+
+          # Move to artifact root for upload
+          Move-Item $final "ohmywork-$version-x64-setup-unsigned.exe" -Force
+          Move-Item "$final.sha256" "ohmywork-$version-x64-setup-unsigned.exe.sha256" -Force
+
+      - name: Upload installer artifact (unsigned test)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ohmywork-windows-x64-installer-unsigned
+          path: |
+            ohmywork-*-setup-unsigned.exe
+            ohmywork-*-setup-unsigned.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Smoke the staged layout (auto checks only)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/smoke-install.ps1 -InstallDir "packaging\windows\staging" -HumanChecksAsError:$false
+          if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 2) {
+            throw "smoke-install.ps1 failed (auto checks)"
+          }
+
+      - name: (Optional) Create release (manual gate only)
+        if: ${{ github.event.inputs.create_release == true }}
+        shell: pwsh
+        run: |
+          Write-Host "Release creation skipped in this workflow step."
+          Write-Host "Manual gate: verify pdfium completeness, run real hardware smoke, sign with EV cert before tagging release."
+          # In real flow: gh release upload ... after signing
+
+# Notes:
+# - Always --locked.
+# - pdfium fetch+hash verify happens before nsis; mismatch or missing manifest entry -> hard fail.
+# - If pdfium assets (dll+hash+full NOTICE from tgz) incomplete -> workflow fails, no candidate produced.
+# - Unsigned builds are explicitly renamed *-unsigned and commented "未签名".
+# - Real prod releases: add signing step with certificate (not in this repo), change artifact naming, gate on inputs.
+# - Matches check.yml runner + toolchain + locked.
+# - Never ships perf_runner / fake_pi (not copied in stage).

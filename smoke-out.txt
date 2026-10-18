@@ -1,0 +1,9 @@
+=== ohMyWork smoke-install (per-user, no-admin) ===
+INFO: InstallDir: C:\Users\Karas\AppData\Local\Programs\ohMyWork
+INFO: RequireSigned: False
+Fail: D:\Development\ohMyWork\tools\smoke-install.ps1:42
+Line |
+  42 |      Fail "Install dir missing: $InstallDir (expected %LOCALAPPDATA%\P …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | FAIL: Install dir missing: C:\Users\Karas\AppData\Local\Programs\ohMyWork (expected
+     | %LOCALAPPDATA%\Programs\ohMyWork)

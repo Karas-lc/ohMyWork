@@ -4,6 +4,14 @@
 
 环境：2026-10-18，Windows x64，Rust 1.98.1，MSVC target，GPUI Kit 0.7.0 / gpui-pre 0.3.7。仅记录本机实际执行，不代表 CI 或发布认证。
 
+## 点击标题块的 GPUI 阶段约束修复
+
+- 原因：鼠标回调经 `ensure_textarea_for_block` 创建标题 Textarea 时调用 `Window::with_text_style`，违反 GPUI 的布局/绘制阶段约束。`STATUS_STACK_BUFFER_OVERRUN` 是该 panic 后进程终止的后果，不能据此诊断缓冲区溢出；不将独立的范围断言或编译警告归入此次根因。
+- 修复：Textarea 状态创建不再修改 Window 样式栈；标题字号通过渲染元素的 `text_size` 声明，由 GPUI 在绘制流程应用。鼠标点击和 Enter 后定位共用的创建路径均使用这一规则。
+- 永久回归：`clicking_heading_focuses_textarea_without_editing_source` 经真实鼠标派发点击中文/emoji 标题，验证标题 Textarea 获得窗口焦点、光标位于起点且 Markdown 字节不变。`cargo test -p omw-app --lib editor::view::tests --locked -- --nocapture`：9 项通过。
+- 原生冒烟：临时驱动打开实际 Windows GPUI 编辑器，点击标题并绘制，再切到正文输入 `X`；核对内存 Markdown 为 `# 标题🙂\n\nXbody`，输出 `NATIVE_HEADING_CLICK_COMPLETE` 并正常退出。按驱动进程定位窗口截取并检查标题放大与正文显示。临时驱动验证后移除；不是完整工作台保存、IME 或发布验收。
+- 另外发现但未在此次崩溃修复中改动：标题 Textarea 输入后，现有 `commit_text` 非空范围路径调用只接受 Paragraph 的 `join_selection_blocks`，返回 `selection does not start in an editable paragraph`。不能把标题点击修复等同于标题编辑能力已验证。
+
 ## 滚动卡顿与多文件崩溃补充验证
 
 针对单文件滚轮卡顿、多文件打开后退出，另外定位并修复了两条路径：
@@ -58,8 +66,8 @@ cargo build --locked -p omw-app -p omw-preview-worker --bins
 - `crates/omw-app/tests/bootstrap_ui.rs`：初始化后进入工作台，而不是只断言状态文案。
 - `crates/omw-local/src/index/normalize.rs`：规范化查询映射到源字符范围，不多带前一个字符。
 - `crates/omw-document/tests/range_regression.rs`：零列列表容器的有序、无损源范围。
-- `crates/omw-app/tests/editor_surface.rs`：滚动和本地编辑后收到外部替换，显示新正文，后续输入与撤销不使用旧缓存。
-- 现有编辑、Raw、Unicode、版本化写盘、ignore、索引、Pi framing/UI request、预览资源限制及状态测试随全量命令运行。
+- `crates/omw-app/src/editor/view.rs` 中的 GPUI 回归测试：点击第二段后输入、Enter / Shift+Enter 分块并继续输入、工具栏撤销后 Textarea 与会话同步；领域级测试验证块内 Enter 返回后续视觉位置并增加一个可见边界。真实绘制的单光标、IME 候选窗和列表标记缩进仍须人工验证。
+- 已删除旧 `crates/omw-app/tests/editor_surface.rs`：其交互测试将输入路由到已移除的 `EditorSurface` 文档级输入处理器，无法验证新的逐块 Textarea。
 
 删除了只固定内部 gram 编码字符串的断言及包含恒真断言的重复主题导入测试；保留面向搜索结果、源边界与主题行为的验证。测试通过不等于下列硬件和发布项通过。
 

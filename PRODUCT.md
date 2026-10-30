@@ -14,7 +14,7 @@ product
 
 应用只有一个 Workspace：Atlas 存共享知识，Efforts 存活跃项目和领域，Archive 存不再使用、待整理或休眠内容。项目不是新的 Workspace 或专门数据库对象。
 
-V1 聚焦可视化 Markdown、基础任务、文件搜索、自由 Homepage、图片/PDF 预览和 Pi 界面。日历与 ICS 放到 V3，不以未来兼容性拖大首版。
+V1 聚焦整篇 Markdown 源码编辑、基础任务、文件搜索、自由 Homepage、图片/PDF 预览和 Pi 界面。日历与 ICS 放到 V3，不以未来兼容性拖大首版。
 
 ## Brand Personality
 
@@ -31,7 +31,7 @@ Homepage 的无限画布是用户自由安排工具的表面，不应套用不�
 ## Design Principles
 
 1. 适配用户已有工具和文件，而非强制迁移。
-2. 纯可视化编辑保持普通 Markdown；不能安全编辑的结构以 Raw 节点保留。
+2. 整篇 Markdown 源码直接编辑并保持普通文件格式；不执行 HTML，不依赖解析成功，也不格式化未改动内容。
 3. 清晰区分 Ctrl+S 正文保存与任务组件立即保存。
 4. 明示外部版本优先和不恢复未保存内容的后果，不暗示拥有草稿保护。
 5. Pi 的工作目录、会话选择和附加上下文由用户决定；宿主不定义 Agent 策略。

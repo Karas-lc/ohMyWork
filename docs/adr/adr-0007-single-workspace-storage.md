@@ -49,7 +49,7 @@ superseded_by: ""
 
 ## Implementation Notes
 
-- **IMP-001**：V1 的首次目录选择、缺失分区初始化、`.ohmywork/id` 与 LocalAppData 设置已由 `omw-local` 和应用首次设置 UI 实现；便携数据集合仍留待后续里程碑，不构建多库注册器。
+- **IMP-001**：V1 的首次目录选择、缺失分区初始化、`.ohmywork/id` 与 LocalAppData 设置由 `project` 的文件/设置适配器和 Workspace 启动界面实现；便携数据集合仍留待后续里程碑，不构建多库注册器。
 - **IMP-002**：索引重建不能删除持久布局、设置或导入主题。
 - **IMP-003**：文件名/Markdown 正文搜索即可，不建立反向链接图。
 

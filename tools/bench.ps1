@@ -18,7 +18,7 @@ try {
     }
     $manifest = Get-Content "$CorpusDir\MANIFEST.json" -Raw | ConvertFrom-Json
     Write-Host ("Manifest: notes={0} tasks={1} ~{2}MB" -f $manifest.note_count, $manifest.task_count, $manifest.total_mb)
-    $messages = @(cargo build -p omw-app --bin perf_runner --release --locked --message-format=json)
+    $messages = @(cargo build -p ohmywork --bin perf_runner --release --locked --message-format=json)
     if ($LASTEXITCODE -ne 0) { throw "Performance runner build failed: $LASTEXITCODE" }
     $executable = $null
     foreach ($line in $messages) {

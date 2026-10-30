@@ -11,8 +11,10 @@ Accepted 表示已确认设计，不表示已有实现。Superseded 文档仅用
 | [0005](adr-0005-zed-theme-import-adapter.md) | Accepted，已补充 | 主题语义适配、手动导入与安全覆盖 |
 | [0006](adr-0006-out-of-process-plugins.md) | Proposed，V2 | 进程外插件方向 |
 | [0007](adr-0007-single-workspace-storage.md) | Accepted | 单一 Workspace、Atlas/Efforts/Archive、全局索引 |
-| [0008](adr-0008-visual-editing-save-policy.md) | Accepted | 纯可视化、最小改写与正文/任务/外部保存边界 |
+| [0008](adr-0008-visual-editing-save-policy.md) | Partially superseded by 0011/0012 | 编辑模式已替代；DEC-004…007 保存边界仍现行 |
 | [0009](adr-0009-basic-tasks-calendar-v3.md) | Accepted | 基础 Task，日历与 ICS 延期 V3 |
 | [0010](adr-0010-user-controlled-pi-context.md) | Accepted | 用户控制 Pi 目录、会话与上下文，宿主不干涉 |
+| [0011](adr-0011-markdown-source-editor.md) | Accepted，部分替代 0008；被 0012 部分替代编辑模式 | 整篇 Markdown 源码编辑与严格 Task 源范围保护 |
+| [0012](adr-0012-inline-markdown-editing.md) | Accepted，部分替代 0011 | 原生 GPUI 同区 Markdown 渲染编辑（必要位置显露标记） |
 
 仍有实现前待定项，见 [产品需求](../product-requirements.md)。

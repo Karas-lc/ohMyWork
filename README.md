@@ -28,7 +28,7 @@ Workspace/
 ## V1 范围
 
 - 单一主窗口，可嵌套横向/纵向分栏，恢复标签与布局。
-- CommonMark + GFM 纯可视化 Markdown 编辑，无源码模式；未知内容以 Raw 节点保留。
+- CommonMark + GFM 整篇 Markdown 源码编辑；标记始终可见，Raw、HTML 与未知语法可直接编辑。
 - 正文 Ctrl+S 保存，任务组件操作立即保存；不恢复崩溃前未保存编辑。
 - 基础 Task：checkbox、标题、start、due、priority；无独立 status。
 - 文件名与 Markdown 正文搜索，使用专有 `.ohmyworkignore`。

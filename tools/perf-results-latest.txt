@@ -1,10 +1,10 @@
 # Performance evidence
 
 Build: release
-Corpus: D:/tmp/omw-perf-smoke-release
+Corpus: C:\Users\Karas\AppData\Local\Temp\ohmywork-bench-final-46843a4b-a7b4-4ab0-a41a-32e3626fd281
 Indexed files: 201; tasks: 312
-First index: 5.6001957s
-Search API only (50-result page, excluding UI scheduling/debounce/rendering): P50 441.5701ms; P95 476.4562ms
-Raw query milliseconds: [466.64889999999997, 0.266, 0.1578, 451.30330000000004, 476.4562, 456.0644, 344.6649, 414.12919999999997, 361.9105, 441.5701]
+First index: 3.4344333s
+Search API only (50-result page, excluding UI scheduling/debounce/rendering): P50 645.8286ms; P95 681.3389ms
+Raw query milliseconds: [681.3389, 0.42210000000000003, 0.2277, 681.2998, 645.8285999999999]
 
 UNMEASURED: process startup-to-interactive, editor layout, input-to-pixel, ten-tab workbench PrivateBytes, GPU/worker/Pi resources. No GUI budget pass claimed. Previous stats()/format! proxy numbers are invalid for those metrics.

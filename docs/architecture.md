@@ -1,6 +1,20 @@
 # Architecture
 
-> 已确认边界与设计约束；模块为逻辑划分，不是已创建的 Rust crates。以最新需求与 ADR 为准。
+> 已确认系统边界与设计约束；以下 Rust crate 划分是当前实现边界，不改变产品范围。以最新需求与 ADR 为准。
+
+## Rust crate 边界
+
+本地 Cargo workspace 恰有五个 package：
+
+| Crate | 职责 | 本地依赖 |
+|---|---|---|
+| `ui` | 公共主题、对比度与 GPUI 展示集成；不持有产品状态或执行文件 I/O | 无 |
+| `project` | 文件系统与安全写盘、扫描/watch、SQLite 索引、Pi 协议/进程 Adapter、预览协议/worker、诊断 | 无 |
+| `editor` | 无损 Markdown 与 Task 编辑、`PageDocument`、`DocumentStore`、保存/Task/外部修改流程及编辑器界面 | `ui`、`project` |
+| `workspace` | Workspace 会话、查询、Homepage、Pi/预览会话、关闭协调、布局持久化与产品视图 | `ui`、`editor`、`project` |
+| `ohmywork` | 应用入口、runtime/assets/keymap 装配及二进制 | `ui`、`editor`、`project`、`workspace` |
+
+依赖方向：`ohmywork → workspace → editor → project`；`ui` 是独立的展示基础层。`project` 不依赖 GPUI。
 
 ## 1. 核心模型
 
@@ -26,13 +40,13 @@
 
 ## 2. 文档引擎
 
-Markdown 原文是持久事实来源，可视化树是编辑投影而非私有富文本库。
+Markdown 原文是持久事实来源，也是唯一正文编辑缓冲。
 
-- CommonMark + GFM；基础 Task 字段单独解释。
-- 不安全或未知结构映射成携带源文本的 Raw 节点。
-- 未修改节点保留源片段，被修改范围才重新序列化。
-- 视觉位置、选区、语法树与源范围需稳定映射，支持中文输入法和撤销。
-- 不提供源码模式、Live Preview 或全文自动格式化。
+- CommonMark + GFM 用于基础 Task 等语义识别，不限制源码输入。
+- Markdown 标记、HTML、Raw、未知语法和未闭合围栏均可作为普通源码编辑；应用不执行 HTML。
+- 正文保存直接写入用户编辑的 UTF-8 源内容，不经富文本重序列化，不规范化未改动内容。
+- 文档级历史与每个编辑表面的原生选区、滚动和 IME 状态分离。
+- 不提供块级可视化模式、双模式、Live Preview 或全文自动格式化。
 
 ### 保存状态与事件来源
 
@@ -47,10 +61,10 @@ Markdown 原文是持久事实来源，可视化树是编辑投影而非私有�
 | Task 组件修改 | 只提交目标任务变化 | 合并已提交变化，其余脏正文保留 |
 | 崩溃/断电 | 保留最近成功磁盘内容 | 未保存编辑丢失，无恢复快照 |
 
-Task 提交不能序列化整个脏文档。必须以磁盘基线定位任务、构造局部修改，并对内存版本进行同步；自写 watcher 事件不可触发外部丢弃逻辑。重叠编辑处理与竞争校验算法待定，不可靠盲目旧行号写入。
+Task 提交不能序列化整个脏文档。以磁盘基线按 Task anchor 构造字段补丁，并逐字节校验旧片段；当前及所有保留历史状态的 `[0, task source_range.end)` 必须与基线一致，否则拒绝写盘，不自动搜索重定位或顺带保存正文。自写 watcher 事件不可触发外部丢弃逻辑。
 
 外部优先不等于允许保存覆盖刚变化的外部数据：保存前须校验磁盘版本，发现变化先采用外部版本。原子替换能力、链接目标/硬链接行为及跨进程竞争需验证，不能宣传绝对无竞争。
-当前安全保存实现位于 `omw-local`：同目录 create-new 临时文件，写入并 `sync_all` 后在替换前再次校验内容版本；Windows 已有文件使用 `ReplaceFileW`，新文件使用不覆盖移动语义。按 `DocumentKey` 的写队列串行同文件保存，普通请求有界为 256，保存请求走不可丢失队列。Windows 文件身份字段暂不从稳定 Rust 标准库读取，版本校验以 BLAKE3 内容哈希和长度为准。
+当前安全保存实现位于 `project` crate：同目录 create-new 临时文件，写入并 `sync_all` 后在替换前再次校验内容版本；Windows 已有文件使用 `ReplaceFileW`，新文件使用不覆盖移动语义。按 `DocumentKey` 的写队列串行同文件保存，普通请求有界为 256，保存请求走不可丢失队列。Windows 文件身份字段暂不从稳定 Rust 标准库读取，版本校验以 BLAKE3 内容哈希和长度为准。
 
 ## 3. 文件服务与索引
 

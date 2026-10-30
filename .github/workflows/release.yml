@@ -56,7 +56,7 @@ jobs:
           }
           Write-Host "Using release dir: $releaseDir"
 
-          # Main binaries (ohmywork from explicit [[bin]], worker from its crate)
+          # Main binaries from ohmywork and project packages; runtime names remain stable.
           Copy-Item (Join-Path $releaseDir "ohmywork.exe") $stage -Force
           Copy-Item (Join-Path $releaseDir "omw-preview-worker.exe") $stage -Force
 

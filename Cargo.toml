@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/omw-app", "crates/omw-document", "crates/omw-local", "crates/omw-pi", "crates/omw-preview-worker"]
+members = ["crates/ui", "crates/editor", "crates/project", "crates/workspace", "crates/ohmywork"]
 resolver = "3"
 
 [workspace.package]
@@ -8,7 +8,7 @@ license = "MIT"
 rust-version = "1.98.1"
 
 [workspace.dependencies]
-gpui-kit = "=0.7.0"
+gpui-kit = "=0.8.1"
 blake3 = "=1.8.2"
 notify = "=7.0.0"
 serde = { version = "=1.0.229", features = ["derive"] }

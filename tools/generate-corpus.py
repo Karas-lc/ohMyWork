@@ -284,7 +284,7 @@ def main():
     except Exception as e:
         print(f"Self-verify warning: {e}", file=sys.stderr)
 
-    print("\nUse with: cargo run -p omw-app --bin perf_runner -- --corpus " + str(out))
+    print("\nUse with: cargo run -p ohmywork --bin perf_runner -- --corpus " + str(out))
     print("Or pwsh tools/bench.ps1")
 
 if __name__ == "__main__":

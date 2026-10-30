@@ -11,7 +11,7 @@
       "size": 31731200,
       "sha256": "a795cfa040196f560ba165aa45e3ea8c70ec2d1fa72c09ee4d3d7680f3c603fb",
       "required": true,
-      "notes": "Main application binary (name set via [[bin]] in omw-app/Cargo.toml). Value from current build; CI release re-patches with its artifacts."
+      "notes": "Main application binary (name set via [[bin]] in ohmywork/Cargo.toml). Value from current build; CI release re-patches with its artifacts."
     },
     {
       "path": "omw-preview-worker.exe",

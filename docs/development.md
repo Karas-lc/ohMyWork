@@ -28,6 +28,38 @@ Electron/WebView。
 linker（rustc 自动从注册表定位 VS 的 link.exe）。该文件不修改用户或全局 Cargo
 配置、不修改 PATH。
 
+### 动态快捷键 API 边界
+
+GPUI Kit 0.8.1 配套的 `KeyBinding::new` 只接受 `&'static str`，用于静态绑定。
+`keymap.jsonc` 的动态键位在转换 `ctrl+s` 等写法后，使用 `KeyBinding::load` 注册；
+上下文谓词按 `KeyContext` 解析，命令复用 `CommandId::to_action()`。
+注册失败会在标准错误输出中报告上下文、键位和命令，不泄漏字符串来延长生命周期。
+
+### 编辑器 Rope API 边界
+
+`editor::SourceRope` 使用 GPUI Kit 0.7.0 组件导出的 Ropey 2.0.0-beta.1，
+与解析器使用的 Ropey 1.6.1 不同。组件 Rope 的字节长度为 `len()`；
+字节与字符索引转换使用 `byte_to_char_idx()` / `char_to_byte_idx()`，
+不能混用解析器 Rope 的 `len_bytes()` / `byte_to_char()` / `char_to_byte()`。
+
+`EditorState::set_value` 接受可转换为 `InputContent` 的文本，不接受 Rope。
+初始化、文档同步和外部重载在此边界使用 `to_string()`；源码历史仍保留 Rope。
+`SourceSession` 仅供 `documents` 及其子模块使用，不向 crate 根重导出。
+
+### Markdown 正文绘制与验证边界
+
+`MarkdownElement` 使用 GPUI Kit 0.8.1 的公开 `editor_host` 块渲染接口。
+`request_layout` 返回的状态持有同一个正文 `AnyElement`，随后将预绘制和绘制
+分别委托给它；不能只请求布局后丢弃子元素，否则文件已读入也会出现空白正文。
+叶几何通过 `collect_leaf_geometry` 在预绘制期间采集，每帧替换，不使用固定行高或虚构坐标。
+外部版本变化先清除旧投影，再为当前 snapshot 重建，避免清除新投影后停留在 Loading。
+
+当前源投影、表格网格编辑和原生输入仍未完成，不能据此宣称同区编辑已验收。
+`cargo check` 仅验证类型兼容性；显示检查必须使用当前源码构建的新程序。
+`--editor-demo` 只检查内置样例显示，真实文件加载仍须在工作台打开 Markdown 检查；
+两者都不能替代保存、任务局部写回或外部修改同步的验收。
+
+
 ## 运行诊断
 
 在任意目录执行（脚本按自身位置定位仓库根，不依赖当前工作目录）：
@@ -124,8 +156,8 @@ doctor 只检测并给出命令，不自行安装；任何安装前需用户明�
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
-cargo run -p omw-app --bin ohmywork
-cargo run -p omw-app --bin ohmywork -- --editor-demo
+cargo run -p ohmywork --bin ohmywork --locked
+cargo run -p ohmywork --bin ohmywork --locked -- --editor-demo
 ```
 
 默认入口在 Workspace 初始化或恢复后显示真实工作台：文件树、Markdown 编辑、搜索、任务、Homepage 与 Pi 面板。`--editor-demo` 只用于隔离检查编辑器 fixture，不能作为真实文件保存或工作台集成的验收证据。

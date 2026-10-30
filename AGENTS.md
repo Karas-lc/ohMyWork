@@ -10,17 +10,17 @@
 
 ## 当前范围
 
-- V1：Windows 11 x64、Rust/GPUI、本地工作台、基础任务、图片/PDF 预览与 Pi 界面适配。
+- V1：Windows 11 x64、Rust/GPUI、本地工作台、基础任务、原生 GPUI 同区 Markdown 渲染编辑、图片/PDF 预览与 Pi 界面适配。
 - V2：插件、外部连接器、资源信封、自动化、Dataview 功能级兼容。
 - V3：日历、ICS；复杂任务规则须重新决策。
 
-V1 不实现 Live Preview、源码模式、多 Workspace 系统、专门项目对象、日历、ICS、重复/依赖、反向链接或重命名链接更新。
+V1 不实现 Live Preview、独立全局源码模式、多 Workspace 系统、专门项目对象、日历、ICS、重复/依赖、反向链接或重命名链接更新。
 
 ## 已确认约束
 
 1. **一个 Workspace**：Atlas、Efforts、Archive 为根目录中的真实文件夹。项目/领域只是普通目录，不再设计多个 Vault 的注册、切换或跨 Workspace 搜索。
 2. **开放内容**：Markdown 是页面与任务事实来源，CommonMark + GFM；Dataview 字段仅是基础 Task 的专项扩展。
-3. **可视化编辑**：无源码切换；未知/不能安全可视化的内容保留为 Raw 节点，允许移动/删除，不编辑内部文本。只改写必要源范围。
+3. **可视化编辑**：原生 GPUI 同区 Markdown 渲染编辑（平时隐藏已识别标记，活动 leaf 原位显露必要源）；无源码切换；未知/不能安全可视化的内容保留为 Raw 节点，允许移动/删除，不编辑内部文本。只改写必要源范围。
 4. **正文保存**：Ctrl+S/保存命令提交；关闭脏内容提供保存/放弃/取消；不持久化未保存草稿。
 5. **外部优先**：真实外部修改直接重载并丢弃未保存本地编辑，无撤销恢复。应用自写事件不得误判成外部修改。
 6. **任务保存**：任务组件立即只写任务范围，并合并到内存文档，保留其他未保存正文；不得把此操作当作外部覆盖或顺带保存全文。
@@ -44,19 +44,26 @@ V1 不实现 Live Preview、源码模式、多 Workspace 系统、专门项目�
 
 实现前阅读对应规格；有冲突先修正文档，不选择方便的旧版本。用户尚未决定的事项明确标为待定，不擅自扩展 V1。难以逆转的决策用 ADR 记录；实现采取可验证的纵向切片。
 
-## 边界代码与验证
+## 边界代码与工作约束
 
 使用明确类型表达内部状态，JSON/RPC/主题解析放在适配器边界。后台结果必须检查代次并可取消；错误给出可操作诊断。不得用 `unwrap()`/`expect()` 处理用户输入、文件或进程触发的失败。
 
-至少验证：
+### 构建、打包与测试
 
-- 可视化编辑与最小范围写回、Raw 内容原样保留；
-- Ctrl+S、外部覆盖、同文件未保存正文与任务立即保存；
-- 一个全局索引的重建与持久应用状态的分离；
-- Archive 默认排除、专有 ignore 和符号链接循环；
-- Pi JSONL、退出/中止、原生 Extension UI、显式上下文；
-- 图片/PDF 只读预览、恶意输入与资源上限；
-- Zed 手动导入、语义回退及关键对比度修正；
-- 双语、输入法、键盘、缩放、无限画布；
-- 安装/手动升级/卸载与本地诊断隐私；
-- 已批准性能预算。具体测试方法仍需固定，不能把目标声称为实测结果。
+- 不要自动构建或自动打包；只有用户明确要求时才执行。
+- 不要编写测试，也不要运行测试。
+- 无用的测试、测试运行和打包会占用太多时间；不要为了验证而自行增加这些工作。
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default five triage status strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
